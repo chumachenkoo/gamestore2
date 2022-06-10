@@ -18,12 +18,12 @@
             <!-- Your rows inside the table HERE: -->
             {% for game in games %}
                 <tr>
-                    <td>{{ game.name }}</td>
-                    <td>{{ game.price }}$</td>
-                    <td>{{ game.banned_region }}</td>
+                    <td>{{ game.get('name') }}</td>
+                    <td>{{ game.get('price') }}$</td>
+                    <td>{{ game.get('restricted') }}</td>
                     <td>
                         <button class="btn btn-outline btn-info">More Info</button>
-                        <a href="/buy/{{ game.key }}" class="btn btn-outline btn-success">Purchase this Item</a>
+                        <a href="/buy/{{ game.get('name') }}" class="btn btn-outline btn-success">Purchase this Item</a>
 
                     </td>
                 </tr>

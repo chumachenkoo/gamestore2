@@ -1,7 +1,8 @@
 from market import app
 from flask import render_template, redirect, url_for, request, session
 from market.forms import RegisterForm
-from market.models import User, users_db, shop_db
+from market.models import User, users_db, catalog, Game
+from random import randint
 
 
 @app.route('/')
@@ -12,26 +13,34 @@ def home_page():
 
 @app.route('/market')
 def market_page():
-    games = shop_db.getGames()
-    # if 'email_address' in session:
-    #     user_email = session['email_address']
-    #     user_games = users_db.getGames(user_email)
-    #     return render_template('market.html', games=shop_db.clearGames(user_games))
-    # else:
-    return render_template('market.html', games=games)
+    user_email = session.get('email_address')
+
+    if user_email is not None:
+        purchased = []
+        for game in users_db.findUser(user_email).getGames():
+            purchased.append(game.name)
+
+        res = catalog.getFiltered(purchased)
+
+        return render_template('market.html', games=res)
+
+    return render_template('market.html', games=catalog.getCatalog())
 
 
-@app.route('/buy/<gamekey>')
-def buy(gamekey):
+@app.route('/buy/<game_name>')
+def buy(game_name):
     if 'email_address' in session:
         email_address = session.get('email_address')
         user = users_db.findUser(email_address)
-        game = shop_db.extractGame(gamekey)
+
+        key = str(randint(10000, 99000))
+
+        game = Game(key, game_name, catalog.findGame(game_name)['price'], catalog.findGame(game_name)['restricted'])
 
         user.addGame(game)
-        return render_template('games.html')
+        return redirect(url_for('games'))
     else:
-        return render_template("post_login.html")
+        return redirect(url_for('get_login'))
 
 
 @app.route('/register', methods=['POST', 'GET'])
@@ -66,7 +75,7 @@ def post_login():
                 session['email_address'] = email_address
                 return redirect(url_for('market_page'))
         else:
-            return redirect(url_for('post_login'))
+            return redirect(url_for('get_login'))
 
 
 @app.route("/login", methods=['GET'])
@@ -80,14 +89,14 @@ def get_login():
 @app.route('/logout')
 def logout():
     session.clear()
-    return redirect(url_for("post_login"))
+    return redirect(url_for("get_login"))
 
 
 @app.route('/games')
 def games():
     if 'email_address' in session:
         user_email = session['email_address']
-        user_games = users_db.getGames(user_email)
+        user_games = users_db.findUser(user_email).getGames()
         return render_template("games.html", games=user_games)
     else:
-        return redirect(url_for('post_login'))
+        return redirect(url_for('get_login'))

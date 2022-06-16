@@ -1,8 +1,7 @@
 from market import app
 from flask import render_template, redirect, url_for, request, session
 from market.forms import RegisterForm
-from market.models import User, users_db, catalog, Game
-from random import randint
+from market import db
 
 
 @app.route('/')
@@ -13,32 +12,22 @@ def home_page():
 
 @app.route('/market')
 def market_page():
-    user_email = session.get('email_address')
+    user_id = session.get('id')
 
-    if user_email is not None:
-        purchased = []
-        for game in users_db.findUser(user_email).getGames():
-            purchased.append(game.name)
+    games = db.get_market()
 
-        res = catalog.getFiltered(purchased)
-
-        return render_template('market.html', games=res)
-
-    return render_template('market.html', games=catalog.getCatalog())
+    return render_template('market.html', games=games)
 
 
 @app.route('/buy/<game_name>')
 def buy(game_name):
-    if 'email_address' in session:
-        email_address = session.get('email_address')
-        user = users_db.findUser(email_address)
+    if 'id' in session:
+        user_id = session.get('id')
 
-        key = str(randint(10000, 99000))
 
-        game = Game(key, game_name, catalog.findGame(game_name)['price'], catalog.findGame(game_name)['restricted'])
 
-        user.addGame(game)
-        return redirect(url_for('games'))
+        # return redirect(url_for('games'))
+        return str(user_id)
     else:
         return redirect(url_for('get_login'))
 
@@ -54,10 +43,9 @@ def register_page():
         password = request.form.get('password1')
         region = request.form.get('region')
 
-        u = User(username, email_address, password, region)
-        users_db.addUser(u)
+        user_id = db.register_user(username, email_address, password, region)
+        session['id'] = user_id
 
-        session['email_address'] = u.email_address
         return redirect(url_for('market_page'))
 
 
@@ -67,20 +55,20 @@ def post_login():
         session.permanent = True
         email_address = request.form['email']
         password = request.form['password']
+        result = db.login(email_address, password)
 
-        user_data = users_db.findUser(email_address)
-
-        if user_data is not None:
-            if password == user_data.password:
-                session['email_address'] = email_address
-                return redirect(url_for('market_page'))
+        if result:
+            session['id'] = result
+            return redirect(url_for('market_page'))
         else:
             return redirect(url_for('get_login'))
 
 
+
+
 @app.route("/login", methods=['GET'])
 def get_login():
-    if 'email_address' in session:
+    if 'id' in session:
         return redirect(url_for('market_page'))
     else:
         return render_template("login.html")
@@ -96,7 +84,6 @@ def logout():
 def games():
     if 'email_address' in session:
         user_email = session['email_address']
-        user_games = users_db.findUser(user_email).getGames()
         return render_template("games.html", games=user_games)
     else:
         return redirect(url_for('get_login'))

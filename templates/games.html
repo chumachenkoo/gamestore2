@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+{% block title %}
+  Market Page
+{% endblock %}
+
+{% block content %}
+      <table class="table table-hover table-dark">
+        <thead>
+            <tr>
+                <!-- Your Columns HERE -->
+                <th scope="col">Name</th>
+                <th scope="col">Personal Key</th>
+                <th scope="col">Restricted</th>
+                <th scope="col"></th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Your rows inside the table HERE: -->
+            {% for game in games %}
+                <tr>
+                    <td>{{ game }}</td>
+                    <td>{{ game }}</td>
+                    <td>{{ game }}</td>
+
+                </tr>
+
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}

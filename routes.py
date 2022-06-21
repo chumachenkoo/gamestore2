@@ -64,8 +64,6 @@ def post_login():
             return redirect(url_for('get_login'))
 
 
-
-
 @app.route("/login", methods=['GET'])
 def get_login():
     if 'id' in session:
@@ -82,8 +80,9 @@ def logout():
 
 @app.route('/games')
 def games():
-    if 'email_address' in session:
-        user_email = session['email_address']
+    if 'id' in session:
+        user_id = session['id']
+        user_games = db.get_user_games(user_id)
         return render_template("games.html", games=user_games)
     else:
         return redirect(url_for('get_login'))

@@ -1,6 +1,5 @@
 {% extends 'base.html' %}
 {% block title %}
-  Market Page
 {% endblock %}
 
 {% block content %}
@@ -20,14 +19,27 @@
                 <tr>
                     <td>{{ game[1] }}</td>
                     <td>{{ game[2] }}$</td>
-                    <td>{{ game[3] }}</td>
+                    <td>
+                        {% for country in game[3]%}
+                            {{country}}
+                        {% endfor %}
+                    </td>
                     <td>
                         <button class="btn btn-outline btn-info">More Info</button>
-                        <a href="/buy/{{ game[1] }}" class="btn btn-outline btn-success">Purchase this Item</a>
+                        <a href="/buy/{{ game[0] }}" class="btn btn-outline btn-success">Purchase this Item</a>
 
                     </td>
                 </tr>
             {% endfor %}
         </tbody>
     </table>
+
+{% with messages = get_flashed_messages() %}
+  {% if messages %}
+    {% for message in messages %}
+      <p>{{ message }}</p>
+    {% endfor %}
+  {% endif %}
+{% endwith %}
+
 {% endblock %}

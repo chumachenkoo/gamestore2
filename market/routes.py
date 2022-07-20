@@ -1,7 +1,8 @@
 from market import app
-from flask import render_template, redirect, url_for, request, session
+from flask import render_template, redirect, url_for, request, session, flash
 from market.forms import RegisterForm
-from market import db
+import database
+import key_generator
 
 
 @app.route('/')
@@ -12,22 +13,22 @@ def home_page():
 
 @app.route('/market')
 def market_page():
+    games_catalog = database.get_market_games()
+    return render_template('market.html', games=games_catalog)
+
+
+@app.route('/buy/<game_id>')
+def buy(game_id):
     user_id = session.get('id')
-
-    games = db.get_market()
-
-    return render_template('market.html', games=games)
-
-
-@app.route('/buy/<game_name>')
-def buy(game_name):
-    if 'id' in session:
-        user_id = session.get('id')
-
-
-
-        # return redirect(url_for('games'))
-        return str(user_id)
+    if user_id is not None:
+        data = database.find_regions(user_id, game_id)
+        if data[0][0] != data[0][1]:
+            serial = key_generator.generate()
+            database.register_game(game_id, user_id, serial)
+            return redirect(url_for('games'))
+        else:
+            flash('Game is banned in your region', 'info')
+            return redirect(url_for('market_page'))
     else:
         return redirect(url_for('get_login'))
 
@@ -43,10 +44,9 @@ def register_page():
         password = request.form.get('password1')
         region = request.form.get('region')
 
-        user_id = db.register_user(username, email_address, password, region)
-        session['id'] = user_id
+        database.register_user(username, email_address, password, region)
 
-        return redirect(url_for('market_page'))
+        return redirect(url_for('get_login'))
 
 
 @app.route("/login", methods=['POST'])
@@ -55,18 +55,19 @@ def post_login():
         session.permanent = True
         email_address = request.form['email']
         password = request.form['password']
-        result = db.login(email_address, password)
 
-        if result:
-            session['id'] = result
-            return redirect(url_for('market_page'))
-        else:
-            return redirect(url_for('get_login'))
+        user_data = database.get_user_by_email(email_address)
+        if user_data is not None:
+            if password == user_data[3]:
+                session['id'] = user_data[0]
+                return redirect(url_for('market_page'))
+
+        return redirect(url_for('get_login'))
 
 
 @app.route("/login", methods=['GET'])
 def get_login():
-    if 'id' in session:
+    if 'email_address' in session:
         return redirect(url_for('market_page'))
     else:
         return render_template("login.html")
@@ -80,9 +81,9 @@ def logout():
 
 @app.route('/games')
 def games():
-    if 'id' in session:
-        user_id = session['id']
-        user_games = db.get_user_games(user_id)
+    user_id = session.get('id')
+    if user_id is not None:
+        user_games = database.get_user_games(user_id)
         return render_template("games.html", games=user_games)
     else:
         return redirect(url_for('get_login'))

@@ -9,8 +9,8 @@
             <tr>
                 <!-- Your Columns HERE -->
                 <th scope="col">Name</th>
+                <th scope="col">Bought for</th>
                 <th scope="col">Personal Key</th>
-                <th scope="col">Restricted</th>
                 <th scope="col"></th>
             </tr>
         </thead>
@@ -18,9 +18,9 @@
             <!-- Your rows inside the table HERE: -->
             {% for game in games %}
                 <tr>
-                    <td>{{ game }}</td>
-                    <td>{{ game }}</td>
-                    <td>{{ game }}</td>
+                    <td>{{ game[0] }}</td>
+                    <td>{{ game[1] }}$</td>
+                    <td>{{ game[2] }}</td>
 
                 </tr>
 
